@@ -25,12 +25,28 @@ public class SchemaParser {
         String outputFile = "C:/path/to/output.csv";
         
         try {
+            // Print complete JSON structure
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode root = mapper.readTree(new File(jsonInputFile));
+            
+            System.out.println("\nJSON Structure:");
+            System.out.println("classname: " + root.path("classname").asText());
+            System.out.println("table_name: " + root.path("table_name").asText());
+            System.out.println("\nTable Columns:");
+            JsonNode tableColumns = root.path("table_columns");
+            for (JsonNode col : tableColumns) {
+                System.out.println("---");
+                System.out.println("className: " + col.path("classname").asText());
+                System.out.println("column_name: " + col.path("column_name").asText());
+                System.out.println("field: " + col.path("field").asText());
+            }
+            
             List<ColumnMapping> mappings = readJsonMappings(jsonInputFile);
-            System.out.println("Loaded JSON mappings:");
+            System.out.println("\nLoaded JSON mappings:");
             mappings.forEach(System.out::println);
             
             generateCSV(textInputFile, outputFile, mappings);
-            System.out.println("CSV file generated successfully!");
+            System.out.println("\nCSV file generated successfully!");
             
         } catch (IOException e) {
             System.err.println("Error processing file: " + e.getMessage());
@@ -96,6 +112,14 @@ public class SchemaParser {
                     String schema = pathParts[0].trim();
                     String table = pathParts[1].trim();
                     String column = pathParts[2].trim();
+                    
+                    // Add logging before finding factField
+                    System.out.println("Parsed values:");
+                    System.out.printf("schema: %s%n", schema);
+                    System.out.printf("table: %s%n", table);
+                    System.out.printf("column: %s%n", column);
+                    System.out.printf("alias: %s%n", alias);
+                    
                     String factField = findFactField(mappings, column, alias);
                     
                     System.out.printf("Writing CSV line: schema='%s', table='%s', column='%s', alias='%s', factField='%s'%n",
