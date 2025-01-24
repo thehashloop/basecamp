@@ -26,6 +26,16 @@ public class SchemaParser {
             System.out.println("Full JSON content:");
             System.out.println(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(root));
             
+            // Verify the 'value' node
+            JsonNode valueNode = root.path("value");
+            System.out.println("\nValue node content:");
+            System.out.println(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(valueNode));
+            
+            // Check if 'table_columns' exists and is an array
+            JsonNode tableColumnsNode = valueNode.path("table_columns");
+            System.out.println("\nTable_columns node type: " + tableColumnsNode.getNodeType());
+            System.out.println("Is table_columns an array? " + tableColumnsNode.isArray());
+            
             List<ColumnMapping> mappings = readJsonMappings(root);
             System.out.println("\nExtracted mappings:");
             mappings.forEach(m -> System.out.printf("column_name: %s, field: %s%n", m.columnName, m.field));
@@ -42,6 +52,11 @@ public class SchemaParser {
         List<ColumnMapping> mappings = new ArrayList<>();
         JsonNode tableColumns = root.path("value").path("table_columns");
         
+        if (!tableColumns.isArray()) {
+            System.err.println("Error: 'table_columns' is not an array!");
+            return mappings;
+        }
+        
         for (JsonNode column : tableColumns) {
             String columnName = column.path("column_name").asText("");
             String field = column.path("field").asText("");
@@ -49,6 +64,8 @@ public class SchemaParser {
             if (!columnName.isEmpty() && !field.isEmpty()) {
                 mappings.add(new ColumnMapping(columnName, field));
                 System.out.printf("Added mapping: column_name='%s', field='%s'%n", columnName, field);
+            } else {
+                System.err.println("Skipping invalid column entry: " + column);
             }
         }
         return mappings;
