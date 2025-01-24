@@ -12,6 +12,11 @@ public class SchemaParser {
             this.columnName = columnName;
             this.field = field;
         }
+        
+        @Override
+        public String toString() {
+            return String.format("ColumnMapping{columnName='%s', field='%s'}", columnName, field);
+        }
     }
     
     public static void main(String[] args) {
@@ -20,12 +25,11 @@ public class SchemaParser {
         String outputFile = "C:/path/to/output.csv";
         
         try {
-            // First read JSON mappings
             List<ColumnMapping> mappings = readJsonMappings(jsonInputFile);
+            System.out.println("Loaded JSON mappings:");
+            mappings.forEach(System.out::println);
             
-            // Process text file and generate CSV
             generateCSV(textInputFile, outputFile, mappings);
-            
             System.out.println("CSV file generated successfully!");
             
         } catch (IOException e) {
@@ -40,9 +44,12 @@ public class SchemaParser {
         List<ColumnMapping> mappings = new ArrayList<>();
         
         JsonNode tableColumns = root.path("table_columns");
+        System.out.println("Reading JSON table columns...");
+        
         for (JsonNode column : tableColumns) {
             String columnName = column.path("column_name").asText();
             String field = column.path("field").asText();
+            System.out.printf("Found JSON mapping: column_name='%s', field='%s'%n", columnName, field);
             mappings.add(new ColumnMapping(columnName, field));
         }
         
@@ -51,13 +58,20 @@ public class SchemaParser {
     
     private static String findFactField(List<ColumnMapping> mappings, String column, String alias) {
         String searchTerm = alias.isEmpty() ? column : alias;
+        System.out.printf("Searching for factField with searchTerm='%s' (column='%s', alias='%s')%n", 
+            searchTerm, column, alias);
         
         for (ColumnMapping mapping : mappings) {
+            System.out.printf("Comparing with mapping: columnName='%s', field='%s'%n", 
+                mapping.columnName, mapping.field);
+                
             if (mapping.columnName.equalsIgnoreCase(searchTerm)) {
+                System.out.printf("Match found! Using field: %s%n", mapping.field);
                 return mapping.field;
             }
         }
-        return ""; // Return empty if no match found
+        System.out.println("No match found, returning empty string");
+        return "";
     }
     
     private static void generateCSV(String inputFile, String outputFile, List<ColumnMapping> mappings) throws IOException {
@@ -71,6 +85,8 @@ public class SchemaParser {
                 line = line.trim();
                 if (line.isEmpty()) continue;
                 
+                System.out.println("\nProcessing line: " + line);
+                
                 String[] parts = line.split("\\s+as\\s+");
                 String fullPath = parts[0].trim();
                 String alias = parts.length > 1 ? parts[1].trim() : "";
@@ -82,6 +98,9 @@ public class SchemaParser {
                     String column = pathParts[2].trim();
                     String factField = findFactField(mappings, column, alias);
                     
+                    System.out.printf("Writing CSV line: schema='%s', table='%s', column='%s', alias='%s', factField='%s'%n",
+                        schema, table, column, alias, factField);
+                        
                     writer.printf("%s,%s,%s,%s,%s%n",
                         escapeCsvField(schema),
                         escapeCsvField(table),
