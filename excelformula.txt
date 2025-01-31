@@ -1,1 +1,1 @@
-=IF(COUNTIF(A$1:A1, A2)=0, "NA", MATCH(A2, A$1:A1, 0))
+=IF(COUNTIF(B$2:B2, B3)=0, "NA", MATCH(B3, B$2:B2, 0) + 1)
