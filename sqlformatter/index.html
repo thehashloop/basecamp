@@ -1,1 +1,90 @@
 
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SQL Formatter with Diff</title>
+    <script src="./lib/react.development.js"></script>
+    <script src="./lib/react-dom.development.js"></script>
+    <script src="https://unpkg.com/babel-standalone@6.26.0/babel.min.js"></script>
+    <script src="./lib/sql-formatter.min.js"></script>
+    <script src="./lib/diff.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        textarea { width: 100%; height: 300px; padding: 10px; font-family: monospace; }
+        .diff-output { padding: 10px; border: 1px solid #ccc; white-space: pre-wrap; }
+        .added { background-color: #e6ffe6; }
+        .removed { background-color: #ffe6e6; }
+        button { padding: 10px 20px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        function SQLFormatter() {
+            const [inputSQL, setInputSQL] = React.useState('');
+            const [formattedSQL, setFormattedSQL] = React.useState('');
+            const [diffHTML, setDiffHTML] = React.useState('');
+
+            const formatSQL = () => {
+                try {
+                    // Format the SQL
+                    const formatted = sqlFormatter.format(inputSQL, {
+                        language: 'sql',
+                        indent: '    ',
+                        uppercase: true
+                    });
+                    setFormattedSQL(formatted);
+
+                    // Generate diff using jsdiff
+                    const diff = Diff.diffLines(inputSQL, formatted);
+                    const displayDiff = diff.map((part, index) => {
+                        const className = part.added ? 'added' : part.removed ? 'removed' : '';
+                        // Escape HTML characters in the diff output
+                        const escapedValue = part.value
+                            .replace(/&/g, '&amp;')
+                            .replace(/</g, '&lt;')
+                            .replace(/>/g, '&gt;');
+                        return `<span class="${className}">${escapedValue}</span>`;
+                    }).join('');
+                    
+                    setDiffHTML(displayDiff);
+                } catch (error) {
+                    alert('Error formatting SQL: ' + error.message);
+                }
+            };
+
+            return (
+                <div>
+                    <h1>SQL Formatter with Diff</h1>
+                    <div className="container">
+                        <div>
+                            <h3>Input SQL:</h3>
+                            <textarea
+                                value={inputSQL}
+                                onChange={(e) => setInputSQL(e.target.value)}
+                                placeholder="Paste your SQL here..."
+                            />
+                            <button onClick={formatSQL}>Format SQL</button>
+                        </div>
+                        
+                        <div>
+                            <h3>Formatted SQL:</h3>
+                            <pre className="diff-output" dangerouslySetInnerHTML={{__html: formattedSQL}} />
+                            
+                            <h3>Changes:</h3>
+                            <div 
+                                className="diff-output"
+                                dangerouslySetInnerHTML={{__html: diffHTML}}
+                            />
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<SQLFormatter />, document.getElementById('root'));
+    </script>
+</body>
+</html> 
