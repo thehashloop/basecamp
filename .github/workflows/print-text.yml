@@ -4,13 +4,13 @@ on:
   workflow_dispatch:
     inputs:
       text:
-        description: 'Text to print'
+        description: "Text to print"
         required: true
-        default: 'Hello, GitHub Actions!'
+        default: "Hello, GitHub Actions!"
 
 jobs:
   print:
     runs-on: ubuntu-latest
     steps:
       - name: Print the input text
-        run: echo "Input text: ${{ github.event.inputs.text }}"
+        run: echo "${{ github.event.inputs.text }}"
